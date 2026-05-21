@@ -16,13 +16,13 @@ $latitude = $property->getLatitude();
 $longitude = $property->getLongitude();
 ?>
 <!-- Hero image -->
-<section class="w-full aspect-[4/3] overflow-hidden bg-slate-100 flex items-center justify-center" data-purpose="hero-image">
+<section class="w-full overflow-hidden bg-slate-100" data-purpose="hero-image">
     <?php if ($heroImage): ?>
         <img src="<?= H::e($heroImage) ?>"
              alt="<?= H::e($property->getDisplayableAddress()) ?>"
-             class="max-w-full max-h-full object-contain object-center">
+             class="w-full h-auto block">
     <?php else: ?>
-        <div class="w-full h-full flex items-center justify-center text-slate-400 text-sm" aria-hidden="true">
+        <div class="w-full aspect-[4/3] flex items-center justify-center text-slate-400 text-sm" aria-hidden="true">
             No image
         </div>
     <?php endif; ?>
