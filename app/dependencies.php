@@ -9,6 +9,7 @@ use App\Domain\Property\PropertyApiMapper;
 use App\Domain\Property\PropertyApiRecordValidator;
 use App\Domain\Property\PropertyApiSyncService;
 use App\Domain\Property\PropertyRepository;
+use App\Domain\Property\PropertySearchValidator;
 use App\Domain\Property\PropertyValidator;
 use App\Infrastructure\ExternalPropertyApi\CurlPropertyApiClient;
 use App\Infrastructure\Media\RemotePropertyImageDownloader;
@@ -61,6 +62,7 @@ return function (ContainerBuilder $containerBuilder) {
         },
         AuthenticationService::class => \DI\autowire(),
         PropertyValidator::class => \DI\autowire(),
+        PropertySearchValidator::class => \DI\autowire(),
         PropertyUploadFailureHandler::class => function (ContainerInterface $c) {
             $settings = $c->get(SettingsInterface::class);
 

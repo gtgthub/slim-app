@@ -12,6 +12,9 @@ use App\Application\Actions\Admin\Property\EditPropertyFormAction;
 use App\Application\Actions\Admin\Property\ListPropertiesAction;
 use App\Application\Actions\Admin\Property\UpdatePropertyAction;
 use App\Application\Actions\Admin\Property\ViewPropertyDetailAction;
+use App\Application\Actions\Public\Property\AddressAutocompleteAction;
+use App\Application\Actions\Public\Property\SearchPropertiesAction;
+use App\Application\Actions\Public\Property\ViewPublicPropertyAction;
 use App\Application\Middleware\AuthMiddleware;
 use App\Application\Middleware\CsrfMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -24,9 +27,9 @@ return function (App $app) {
         return $response;
     });
 
-    $app->get('/', function (Request $request, Response $response) {
-        return $response->withHeader('Location', '/admin/properties')->withStatus(302);
-    });
+    $app->get('/', SearchPropertiesAction::class);
+    $app->get('/properties/addresses/autocomplete', AddressAutocompleteAction::class);
+    $app->get('/properties/{id}', ViewPublicPropertyAction::class);
 
     $app->group('/admin', function (Group $group) {
         $group->get('', function (Request $request, Response $response) {

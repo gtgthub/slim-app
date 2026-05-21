@@ -39,7 +39,7 @@ Migration `005_properties_api_uuid.sql` adds `api_uuid` for API upserts. Re-runn
 composer start
 ```
 
-Open [http://localhost:8080/admin/login](http://localhost:8080/admin/login) and sign in with `SUPERADMIN_EMAIL` / `SUPERADMIN_PASSWORD` from `.env`.
+Open [http://localhost:8080/](http://localhost:8080/) to search properties, or [http://localhost:8080/admin/login](http://localhost:8080/admin/login) and sign in with `SUPERADMIN_EMAIL` / `SUPERADMIN_PASSWORD` from `.env`.
 
 ### Docker
 
@@ -50,6 +50,16 @@ docker compose exec slim sh -c "cp .env.example .env && sed -i 's/DB_HOST=127.0.
 docker compose exec slim php bin/migrate.php
 docker compose exec slim php bin/seed-superadmin.php
 ```
+
+## Public routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | Property search (optional filters) and paginated results |
+| GET | `/properties/addresses/autocomplete` | JSON address suggestions for autocomplete (`?q=`) |
+| GET | `/properties/{id}` | Property detail page |
+
+Search filters (all optional): partial, case-insensitive displayable address (substring match), minimum bedrooms, minimum bathrooms, minimum price. Includes manual and API listings where `deleted_at IS NULL`.
 
 ## Admin routes
 
@@ -129,7 +139,7 @@ Images are downloaded over HTTPS into `public/uploads/properties/api/{uuid}/`.
 - Admin-created listings use `source = 'manual'`
 - API sync upserts `source = 'api'` rows keyed by `api_uuid`
 - Soft deletes via `deleted_at`
-- Future public search should include both sources where `deleted_at IS NULL`
+- Public search at `/` includes both sources where `deleted_at IS NULL`
 
 ## Production notes
 

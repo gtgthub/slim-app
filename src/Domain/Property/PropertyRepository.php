@@ -39,4 +39,16 @@ interface PropertyRepository
     public function findApiByUuid(string $uuid): ?Property;
 
     public function upsertApi(Property $property): Property;
+
+    public function countBySearch(PropertySearchCriteria $criteria): int;
+
+    /**
+     * @return Property[]
+     */
+    public function findBySearch(PropertySearchCriteria $criteria, int $page, int $perPage): array;
+
+    /**
+     * @return string[]
+     */
+    public function findDisplayableAddressesLike(string $term, int $limit): array;
 }

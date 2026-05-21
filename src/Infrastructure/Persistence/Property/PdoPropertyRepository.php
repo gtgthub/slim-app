@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Property;
 use App\Domain\Property\Property;
 use App\Domain\Property\PropertyNotFoundException;
 use App\Domain\Property\PropertyRepository;
+use App\Domain\Property\PropertySearchCriteria;
 use PDO;
 
 class PdoPropertyRepository implements PropertyRepository
@@ -235,6 +236,95 @@ class PdoPropertyRepository implements PropertyRepository
         $stmt->execute($params);
 
         return $property->withId($existing->getId());
+    }
+
+    public function countBySearch(PropertySearchCriteria $criteria): int
+    {
+        [$whereSql, $params] = $this->buildSearchWhere($criteria);
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM properties WHERE deleted_at IS NULL' . $whereSql
+        );
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function findBySearch(PropertySearchCriteria $criteria, int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, $perPage);
+        $offset = ($page - 1) * $perPage;
+
+        [$whereSql, $params] = $this->buildSearchWhere($criteria);
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM properties
+             WHERE deleted_at IS NULL' . $whereSql . '
+             ORDER BY created_at DESC
+             LIMIT :limit OFFSET :offset'
+        );
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map([$this, 'hydrate'], $rows);
+    }
+
+    public function findDisplayableAddressesLike(string $term, int $limit): array
+    {
+        $limit = max(1, min($limit, 50));
+        $stmt = $this->pdo->prepare(
+            'SELECT DISTINCT displayable_address
+             FROM properties
+             WHERE deleted_at IS NULL
+               AND displayable_address LIKE :term
+             ORDER BY displayable_address ASC
+             LIMIT :limit'
+        );
+        $stmt->bindValue(':term', '%' . $term . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        return array_map('strval', $rows);
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    private function buildSearchWhere(PropertySearchCriteria $criteria): array
+    {
+        $sql = '';
+        $params = [];
+
+        $address = $criteria->getDisplayableAddress();
+        if ($address !== null) {
+            $sql .= ' AND displayable_address LIKE :displayable_address';
+            $params['displayable_address'] = '%' . $address . '%';
+        }
+
+        $minBedrooms = $criteria->getMinBedrooms();
+        if ($minBedrooms !== null) {
+            $sql .= ' AND bedrooms >= :min_bedrooms';
+            $params['min_bedrooms'] = $minBedrooms;
+        }
+
+        $minBathrooms = $criteria->getMinBathrooms();
+        if ($minBathrooms !== null) {
+            $sql .= ' AND bathrooms >= :min_bathrooms';
+            $params['min_bathrooms'] = $minBathrooms;
+        }
+
+        $minPrice = $criteria->getMinPrice();
+        if ($minPrice !== null) {
+            $sql .= ' AND price >= :min_price';
+            $params['min_price'] = $minPrice;
+        }
+
+        return [$sql, $params];
     }
 
     /**

@@ -15,17 +15,31 @@ final class PaginationQuery
 
     private int $perPage;
 
-    private function __construct(int $page, int $perPage)
+    private string $basePath;
+
+    /** @var array<string, string> */
+    private array $extraQueryParams;
+
+    /**
+     * @param array<string, string> $extraQueryParams
+     */
+    private function __construct(int $page, int $perPage, string $basePath, array $extraQueryParams)
     {
         $this->page = $page;
         $this->perPage = $perPage;
+        $this->basePath = $basePath;
+        $this->extraQueryParams = $extraQueryParams;
     }
 
     /**
      * @param array<string, mixed> $queryParams
+     * @param array<string, string> $extraQueryParams Preserved in pagination URLs (e.g. search filters).
      */
-    public static function fromQueryParams(array $queryParams): self
-    {
+    public static function fromQueryParams(
+        array $queryParams,
+        string $basePath = '/admin/properties',
+        array $extraQueryParams = []
+    ): self {
         $perPage = isset($queryParams['per_page']) ? (int) $queryParams['per_page'] : self::DEFAULT_PER_PAGE;
         if (!in_array($perPage, self::PER_PAGE_OPTIONS, true)) {
             $perPage = self::DEFAULT_PER_PAGE;
@@ -36,7 +50,7 @@ final class PaginationQuery
             $page = 1;
         }
 
-        return new self($page, $perPage);
+        return new self($page, $perPage, $basePath, $extraQueryParams);
     }
 
     public function getPage(): int
@@ -68,14 +82,29 @@ final class PaginationQuery
         return min($this->page, $totalPages);
     }
 
+    public function getBasePath(): string
+    {
+        return $this->basePath;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getExtraQueryParams(): array
+    {
+        return $this->extraQueryParams;
+    }
+
     public function buildUrl(int $page, ?int $perPage = null): string
     {
         $perPage = $perPage ?? $this->perPage;
 
-        return '/admin/properties?' . http_build_query([
-            'page' => max(1, $page),
-            'per_page' => $perPage,
+        $query = array_merge($this->extraQueryParams, [
+            'page' => (string) max(1, $page),
+            'per_page' => (string) $perPage,
         ]);
+
+        return $this->basePath . '?' . http_build_query($query);
     }
 
     /**
