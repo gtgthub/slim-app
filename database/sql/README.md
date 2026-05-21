@@ -6,6 +6,7 @@ SQL files are applied in numeric order. All scripts use `CREATE TABLE IF NOT EXI
 2. `002_users.sql` — users table
 3. `003_properties.sql` — properties table
 4. `004_seed_superadmin.sql` — ensures superadmin role exists
+5. `005_properties_api_uuid.sql` — `api_uuid` column for API sync upsert
 
 After migrations, run the SuperAdmin seed script:
 php bin/migrate.php
@@ -26,5 +27,5 @@ DROP TABLE IF EXISTS roles;
 
 ## Notes
 - Admin-created properties use `source = 'manual'`.
-- Future API sync must only upsert rows with `source = 'api'`.
+- API sync upserts rows with `source = 'api'` keyed by `api_uuid`; manual rows are never modified.
 - Soft deletes set `deleted_at`; list queries exclude deleted rows.

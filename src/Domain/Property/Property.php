@@ -27,6 +27,8 @@ class Property
 
     private string $source;
 
+    private ?string $apiUuid;
+
     private string $county;
 
     private string $country;
@@ -60,6 +62,7 @@ class Property
     public function __construct(
         ?int $id,
         string $source,
+        ?string $apiUuid,
         string $county,
         string $country,
         string $town,
@@ -78,6 +81,7 @@ class Property
     ) {
         $this->id = $id;
         $this->source = $source;
+        $this->apiUuid = $apiUuid;
         $this->county = $county;
         $this->country = $country;
         $this->town = $town;
@@ -103,6 +107,11 @@ class Property
     public function getSource(): string
     {
         return $this->source;
+    }
+
+    public function getApiUuid(): ?string
+    {
+        return $this->apiUuid;
     }
 
     public function getCounty(): string

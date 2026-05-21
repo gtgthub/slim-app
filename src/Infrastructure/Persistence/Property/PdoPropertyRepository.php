@@ -18,6 +18,47 @@ class PdoPropertyRepository implements PropertyRepository
         $this->pdo = $pdo;
     }
 
+    public function findAll(): array
+    {
+        $stmt = $this->pdo->query(
+            "SELECT * FROM properties
+             WHERE deleted_at IS NULL
+             ORDER BY created_at DESC"
+        );
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map([$this, 'hydrate'], $rows);
+    }
+
+    public function countAll(): int
+    {
+        $stmt = $this->pdo->query(
+            'SELECT COUNT(*) FROM properties WHERE deleted_at IS NULL'
+        );
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function findPaginated(int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, $perPage);
+        $offset = ($page - 1) * $perPage;
+
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM properties
+             WHERE deleted_at IS NULL
+             ORDER BY created_at DESC
+             LIMIT :limit OFFSET :offset"
+        );
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map([$this, 'hydrate'], $rows);
+    }
+
     public function findAllManual(): array
     {
         $stmt = $this->pdo->query(
@@ -28,6 +69,23 @@ class PdoPropertyRepository implements PropertyRepository
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return array_map([$this, 'hydrate'], $rows);
+    }
+
+    public function findById(int $id): Property
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM properties
+             WHERE id = :id AND deleted_at IS NULL
+             LIMIT 1"
+        );
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            throw new PropertyNotFoundException();
+        }
+
+        return $this->hydrate($row);
     }
 
     public function findManualById(int $id): Property
@@ -80,7 +138,7 @@ class PdoPropertyRepository implements PropertyRepository
                 latitude = :latitude, longitude = :longitude,
                 bedrooms = :bedrooms, bathrooms = :bathrooms, price = :price,
                 property_type = :property_type, listing_type = :listing_type
-             WHERE id = :id AND source = 'manual' AND deleted_at IS NULL"
+             WHERE id = :id AND deleted_at IS NULL"
         );
         $params = $this->toUpdateParams($property);
         $params['id'] = $property->getId();
@@ -97,7 +155,7 @@ class PdoPropertyRepository implements PropertyRepository
     {
         $stmt = $this->pdo->prepare(
             "UPDATE properties SET deleted_at = NOW()
-             WHERE id = :id AND source = 'manual' AND deleted_at IS NULL"
+             WHERE id = :id AND deleted_at IS NULL"
         );
         $stmt->execute(['id' => $id]);
 
@@ -114,6 +172,71 @@ class PdoPropertyRepository implements PropertyRepository
         $stmt->execute(['id' => $id]);
     }
 
+    public function findApiByUuid(string $uuid): ?Property
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM properties
+             WHERE api_uuid = :api_uuid AND source = 'api' AND deleted_at IS NULL
+             LIMIT 1"
+        );
+        $stmt->execute(['api_uuid' => $uuid]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            return null;
+        }
+
+        return $this->hydrate($row);
+    }
+
+    public function upsertApi(Property $property): Property
+    {
+        if ($property->getApiUuid() === null || $property->getApiUuid() === '') {
+            throw new \InvalidArgumentException('API property requires api_uuid.');
+        }
+
+        $existing = $this->findApiByUuid($property->getApiUuid());
+
+        if ($existing === null) {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO properties (
+                    source, api_uuid, county, country, town, description, displayable_address,
+                    image_path, thumbnail_path, latitude, longitude,
+                    bedrooms, bathrooms, price, property_type, listing_type, created_by
+                ) VALUES (
+                    :source, :api_uuid, :county, :country, :town, :description, :displayable_address,
+                    :image_path, :thumbnail_path, :latitude, :longitude,
+                    :bedrooms, :bathrooms, :price, :property_type, :listing_type, :created_by
+                )'
+            );
+            $params = array_merge($this->toUpdateParams($property), [
+                'source' => Property::SOURCE_API,
+                'api_uuid' => $property->getApiUuid(),
+                'created_by' => null,
+            ]);
+            $stmt->execute($params);
+            $id = (int) $this->pdo->lastInsertId();
+
+            return $property->withId($id);
+        }
+
+        $stmt = $this->pdo->prepare(
+            "UPDATE properties SET
+                county = :county, country = :country, town = :town,
+                description = :description, displayable_address = :displayable_address,
+                image_path = :image_path, thumbnail_path = :thumbnail_path,
+                latitude = :latitude, longitude = :longitude,
+                bedrooms = :bedrooms, bathrooms = :bathrooms, price = :price,
+                property_type = :property_type, listing_type = :listing_type
+             WHERE api_uuid = :api_uuid AND source = 'api' AND deleted_at IS NULL"
+        );
+        $params = $this->toUpdateParams($property);
+        $params['api_uuid'] = $property->getApiUuid();
+        $stmt->execute($params);
+
+        return $property->withId($existing->getId());
+    }
+
     /**
      * @param array<string, mixed> $row
      */
@@ -122,6 +245,7 @@ class PdoPropertyRepository implements PropertyRepository
         return new Property(
             (int) $row['id'],
             (string) $row['source'],
+            isset($row['api_uuid']) && $row['api_uuid'] !== null ? (string) $row['api_uuid'] : null,
             (string) $row['county'],
             (string) $row['country'],
             (string) $row['town'],

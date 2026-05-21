@@ -9,7 +9,21 @@ interface PropertyRepository
     /**
      * @return Property[]
      */
+    public function findAll(): array;
+
+    public function countAll(): int;
+
+    /**
+     * @return Property[]
+     */
+    public function findPaginated(int $page, int $perPage): array;
+
+    /**
+     * @return Property[]
+     */
     public function findAllManual(): array;
+
+    public function findById(int $id): Property;
 
     public function findManualById(int $id): Property;
 
@@ -21,4 +35,8 @@ interface PropertyRepository
 
     /** Remove a row permanently (e.g. rollback after failed create). */
     public function forceDelete(int $id): void;
+
+    public function findApiByUuid(string $uuid): ?Property;
+
+    public function upsertApi(Property $property): Property;
 }

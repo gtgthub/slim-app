@@ -24,7 +24,7 @@ class EditPropertyFormAction extends HtmlAction
     protected function action(): Response
     {
         $id = (int) $this->resolveArg('id');
-        $property = $this->propertyRepository->findManualById($id);
+        $property = $this->propertyRepository->findById($id);
 
         return $this->render('admin/properties/form.php', [
             'property' => $property,

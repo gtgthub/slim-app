@@ -24,7 +24,7 @@ class ViewPropertyDetailAction extends HtmlAction
     protected function action(): Response
     {
         $id = (int) $this->resolveArg('id');
-        $property = $this->propertyRepository->findManualById($id);
+        $property = $this->propertyRepository->findById($id);
 
         $html = $this->view->fetch('admin/properties/_detail_content.php', [
             'property' => $property,

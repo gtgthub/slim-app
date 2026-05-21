@@ -125,7 +125,8 @@ class PropertyValidator
 
         return new Property(
             $existing !== null ? $existing->getId() : null,
-            Property::SOURCE_MANUAL,
+            $existing !== null ? $existing->getSource() : Property::SOURCE_MANUAL,
+            $existing !== null ? $existing->getApiUuid() : null,
             $this->trimString($data['county'] ?? ''),
             $this->trimString($data['country'] ?? ''),
             $this->trimString($data['town'] ?? ''),

@@ -1,23 +1,31 @@
 <?php
 
+use App\Application\Support\PaginationQuery;
 use App\Application\Support\ViewHelper as H;
 use App\Domain\Property\Property;
 
 /** @var Property[] $properties */
 /** @var string $csrf */
+/** @var PaginationQuery $pagination */
+/** @var int $currentPage */
+/** @var int $totalPages */
+/** @var int $totalCount */
 
 $pageTitle = 'Properties — Real Estate Admin';
 ob_start();
 ?>
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold">Properties</h1>
+    <div>
+        <h1 class="text-2xl font-bold">Properties</h1>
+        <p class="text-slate-600 text-sm mt-1">Total <?= (int) $totalCount ?> records</p>
+    </div>
     <a href="/admin/properties/create"
        class="bg-slate-800 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-700">
         Add Property
     </a>
 </div>
 
-<?php if (count($properties) === 0): ?>
+<?php if ($totalCount === 0): ?>
     <p class="text-slate-600 bg-white rounded-lg shadow p-6">No properties yet. <a href="/admin/properties/create" class="text-slate-800 underline">Add your first property</a>.</p>
 <?php else: ?>
 <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -30,6 +38,7 @@ ob_start();
                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Price</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Listing</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Source</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
             </tr>
         </thead>
@@ -58,6 +67,7 @@ ob_start();
                 <td class="px-4 py-3 text-sm"><?= H::e($property->getPropertyTypeLabel()) ?></td>
                 <td class="px-4 py-3 text-sm">&pound;<?= H::e(number_format($property->getPrice(), 2)) ?></td>
                 <td class="px-4 py-3 text-sm"><?= H::e($property->getListingTypeLabel()) ?></td>
+                <td class="px-4 py-3 text-sm"><?= $property->getSource() === Property::SOURCE_API ? 'API' : 'Manual' ?></td>
                 <td class="px-4 py-3 text-sm text-right space-x-2">
                     <a href="/admin/properties/<?= (int) $property->getId() ?>/edit"
                        class="text-slate-700 hover:text-slate-900 underline">Edit</a>
@@ -71,6 +81,7 @@ ob_start();
             <?php endforeach; ?>
         </tbody>
     </table>
+    <?php require __DIR__ . '/_pagination.php'; ?>
 </div>
 
 <?php require __DIR__ . '/_detail_modal.php'; ?>

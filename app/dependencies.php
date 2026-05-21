@@ -5,7 +5,13 @@ declare(strict_types=1);
 use App\Application\Settings\SettingsInterface;
 use App\Application\Support\PropertyUploadFailureHandler;
 use App\Domain\Auth\AuthenticationService;
+use App\Domain\Property\PropertyApiMapper;
+use App\Domain\Property\PropertyApiRecordValidator;
+use App\Domain\Property\PropertyApiSyncService;
+use App\Domain\Property\PropertyRepository;
 use App\Domain\Property\PropertyValidator;
+use App\Infrastructure\ExternalPropertyApi\CurlPropertyApiClient;
+use App\Infrastructure\Media\RemotePropertyImageDownloader;
 use App\Infrastructure\Upload\PropertyFileUploader;
 use DI\ContainerBuilder;
 use Monolog\Handler\StreamHandler;
@@ -68,6 +74,34 @@ return function (ContainerBuilder $containerBuilder) {
             $upload = $settings->get('upload');
 
             return new PropertyFileUploader($upload['root']);
+        },
+        CurlPropertyApiClient::class => function (ContainerInterface $c) {
+            $settings = $c->get(SettingsInterface::class);
+            $api = $settings->get('property_api');
+
+            return new CurlPropertyApiClient(
+                $api['base_url'],
+                $api['api_key'],
+                $api['page_size']
+            );
+        },
+        PropertyApiMapper::class => \DI\autowire(),
+        PropertyApiRecordValidator::class => \DI\autowire(),
+        RemotePropertyImageDownloader::class => function (ContainerInterface $c) {
+            $settings = $c->get(SettingsInterface::class);
+            $upload = $settings->get('upload');
+
+            return new RemotePropertyImageDownloader($upload['root']);
+        },
+        PropertyApiSyncService::class => function (ContainerInterface $c) {
+            return new PropertyApiSyncService(
+                $c->get(CurlPropertyApiClient::class),
+                $c->get(PropertyApiMapper::class),
+                $c->get(PropertyApiRecordValidator::class),
+                $c->get(RemotePropertyImageDownloader::class),
+                $c->get(PropertyRepository::class),
+                $c->get(LoggerInterface::class)
+            );
         },
     ]);
 };

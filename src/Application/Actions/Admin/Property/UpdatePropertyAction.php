@@ -35,7 +35,7 @@ class UpdatePropertyAction extends HtmlAction
     protected function action(): Response
     {
         $id = (int) $this->resolveArg('id');
-        $existing = $this->propertyRepository->findManualById($id);
+        $existing = $this->propertyRepository->findById($id);
 
         $data = $this->getFormData();
         if (!is_array($data)) {
