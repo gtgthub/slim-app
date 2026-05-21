@@ -14,6 +14,7 @@ use App\Application\Actions\Admin\Property\UpdatePropertyAction;
 use App\Application\Actions\Admin\Property\ViewPropertyDetailAction;
 use App\Application\Actions\Public\Property\AddressAutocompleteAction;
 use App\Application\Actions\Public\Property\SearchPropertiesAction;
+use App\Application\Actions\Public\Property\SearchPropertiesByLocationAction;
 use App\Application\Actions\Public\Property\ViewPublicPropertyAction;
 use App\Application\Middleware\AuthMiddleware;
 use App\Application\Middleware\CsrfMiddleware;
@@ -29,6 +30,7 @@ return function (App $app) {
 
     $app->get('/', SearchPropertiesAction::class);
     $app->get('/properties/addresses/autocomplete', AddressAutocompleteAction::class);
+    $app->get('/properties/search/location', SearchPropertiesByLocationAction::class);
     $app->get('/properties/{id}', ViewPublicPropertyAction::class);
 
     $app->group('/admin', function (Group $group) {

@@ -56,10 +56,25 @@ docker compose exec slim php bin/seed-superadmin.php
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/` | Property search (optional filters) and paginated results |
+| GET | `/properties/search/location` | Location search: Google Map + sidebar (10 km radius from lat/lng) |
 | GET | `/properties/addresses/autocomplete` | JSON address suggestions for autocomplete (`?q=`) |
 | GET | `/properties/{id}` | Property detail page |
 
-Search filters (all optional): partial, case-insensitive displayable address (substring match), minimum bedrooms, minimum bathrooms, minimum price. Includes manual and API listings where `deleted_at IS NULL`.
+Search filters on `/` (all optional): partial, case-insensitive displayable address (substring match), minimum bedrooms, minimum bathrooms, minimum price. Includes manual and API listings where `deleted_at IS NULL`.
+
+**Location search** (`/properties/search/location`): two tabs — **Location search** (Google Places address + Search button) and **Map** (pick a point on an embedded map; results refresh automatically on pin place or drag). The results map below is view-only (property markers and pan/zoom). Listings must have coordinates; matches within **10 km**, ordered by distance (up to 250 shown). Requires `GOOGLE_MAPS_API_KEY` in `.env`. Active tab is preserved via `tab=text` or `tab=map` in the query string.
+
+### Google Maps (location search)
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), enable **Maps JavaScript API** and **Places API**.
+2. Create a **browser** API key and restrict it by HTTP referrer (e.g. `http://localhost:8080/*`, your production domain).
+3. Set in `.env`:
+
+| Variable | Description |
+|----------|-------------|
+| `GOOGLE_MAPS_API_KEY` | Browser key (loaded on the location search page only) |
+| `GOOGLE_MAPS_DEFAULT_LAT` | Map center before search (default `53.3498`) |
+| `GOOGLE_MAPS_DEFAULT_LNG` | Map center before search (default `-6.2603`) |
 
 ## Admin routes
 

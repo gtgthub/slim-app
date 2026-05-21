@@ -14,9 +14,12 @@ use App\Application\Support\ViewHelper as H;
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-900">
 <header class="bg-slate-800 text-white shadow">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <a href="/" class="font-semibold text-lg hover:text-white">Property Search</a>
-        <a href="/admin/login" class="text-slate-300 hover:text-white text-sm">Admin</a>
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="font-semibold text-lg hover:text-white">Property Search</a>
+            <a href="/properties/search/location" class="text-slate-300 hover:text-white text-sm">Search by location</a>
+        </div>
+        <a href="/admin/login" class="text-slate-300 hover:text-white text-sm shrink-0">Admin</a>
     </div>
 </header>
 

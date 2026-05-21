@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Property;
 
 use App\Domain\Property\Property;
+use App\Domain\Property\PropertyLocationSearchCriteria;
+use App\Domain\Property\PropertyLocationSearchResult;
 use App\Domain\Property\PropertyNotFoundException;
 use App\Domain\Property\PropertyRepository;
 use App\Domain\Property\PropertySearchCriteria;
@@ -290,6 +292,83 @@ class PdoPropertyRepository implements PropertyRepository
         $rows = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
         return array_map('strval', $rows);
+    }
+
+    public function countByLocationSearch(PropertyLocationSearchCriteria $criteria): int
+    {
+        $distanceSql = $this->haversineDistanceKmSql();
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM (
+                SELECT ' . $distanceSql . ' AS distance_km
+                FROM properties
+                WHERE deleted_at IS NULL
+                  AND latitude IS NOT NULL
+                  AND longitude IS NOT NULL
+             ) AS located
+             WHERE distance_km <= :radius_km'
+        );
+        $stmt->execute($this->locationSearchBindParams($criteria));
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function findByLocationSearch(PropertyLocationSearchCriteria $criteria): array
+    {
+        $distanceSql = $this->haversineDistanceKmSql();
+        $limit = PropertyLocationSearchCriteria::MAX_RESULTS;
+        $stmt = $this->pdo->prepare(
+            'SELECT *, ' . $distanceSql . ' AS distance_km
+             FROM properties
+             WHERE deleted_at IS NULL
+               AND latitude IS NOT NULL
+               AND longitude IS NOT NULL
+             HAVING distance_km <= :radius_km
+             ORDER BY distance_km ASC
+             LIMIT :limit'
+        );
+        foreach ($this->locationSearchBindParams($criteria) as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $results = [];
+        foreach ($rows as $row) {
+            $distanceKm = (float) $row['distance_km'];
+            unset($row['distance_km']);
+            $results[] = new PropertyLocationSearchResult(
+                $this->hydrate($row),
+                $distanceKm
+            );
+        }
+
+        return $results;
+    }
+
+    private function haversineDistanceKmSql(): string
+    {
+        return '6371 * ACOS(LEAST(1.0, GREATEST(-1.0,
+            COS(RADIANS(:search_lat_a)) * COS(RADIANS(latitude))
+            * COS(RADIANS(longitude) - RADIANS(:search_lng))
+            + SIN(RADIANS(:search_lat_b)) * SIN(RADIANS(latitude))
+        )))';
+    }
+
+    /**
+     * @return array<string, float>
+     */
+    private function locationSearchBindParams(PropertyLocationSearchCriteria $criteria): array
+    {
+        $lat = $criteria->getLatitude();
+        $lng = $criteria->getLongitude();
+
+        return [
+            'search_lat_a' => $lat,
+            'search_lat_b' => $lat,
+            'search_lng' => $lng,
+            'radius_km' => PropertyLocationSearchCriteria::RADIUS_KM,
+        ];
     }
 
     /**

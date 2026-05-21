@@ -51,4 +51,11 @@ interface PropertyRepository
      * @return string[]
      */
     public function findDisplayableAddressesLike(string $term, int $limit): array;
+
+    public function countByLocationSearch(PropertyLocationSearchCriteria $criteria): int;
+
+    /**
+     * @return PropertyLocationSearchResult[]
+     */
+    public function findByLocationSearch(PropertyLocationSearchCriteria $criteria): array;
 }

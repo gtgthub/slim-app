@@ -70,6 +70,11 @@ return function (ContainerBuilder $containerBuilder) {
                     'sync_max_pages' => $optionalPositiveInt($env('PROPERTY_API_SYNC_MAX_PAGES')),
                     'sync_limit' => $optionalPositiveInt($env('PROPERTY_API_SYNC_LIMIT')),
                 ],
+                'google_maps' => [
+                    'api_key' => $env('GOOGLE_MAPS_API_KEY', '') ?? '',
+                    'default_lat' => (float) ($env('GOOGLE_MAPS_DEFAULT_LAT', '53.3498') ?? '53.3498'),
+                    'default_lng' => (float) ($env('GOOGLE_MAPS_DEFAULT_LNG', '-6.2603') ?? '-6.2603'),
+                ],
             ]);
         },
     ]);
