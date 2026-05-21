@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Domain\User\UserRepository;
-use App\Infrastructure\Persistence\User\InMemoryUserRepository;
+use App\Domain\Auth\AuthUserRepository;
+use App\Domain\Property\PropertyRepository;
+use App\Infrastructure\Persistence\Auth\PdoAuthUserRepository;
+use App\Infrastructure\Persistence\Property\PdoPropertyRepository;
 use DI\ContainerBuilder;
 
 return function (ContainerBuilder $containerBuilder) {
-    // Here we map our UserRepository interface to its in memory implementation
     $containerBuilder->addDefinitions([
-        UserRepository::class => \DI\autowire(InMemoryUserRepository::class),
+        AuthUserRepository::class => \DI\autowire(PdoAuthUserRepository::class),
+        PropertyRepository::class => \DI\autowire(PdoPropertyRepository::class),
     ]);
 };

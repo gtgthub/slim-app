@@ -12,6 +12,13 @@ use Slim\Factory\ServerRequestCreatorFactory;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use Dotenv\Dotenv;
+
+$root = dirname(__DIR__);
+if (file_exists($root . '/.env')) {
+    Dotenv::createImmutable($root)->safeLoad();
+}
+
 // Instantiate PHP-DI ContainerBuilder
 $containerBuilder = new ContainerBuilder();
 

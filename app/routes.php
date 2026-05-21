@@ -2,8 +2,18 @@
 
 declare(strict_types=1);
 
-use App\Application\Actions\User\ListUsersAction;
-use App\Application\Actions\User\ViewUserAction;
+use App\Application\Actions\Admin\LoginAction;
+use App\Application\Actions\Admin\LoginFormAction;
+use App\Application\Actions\Admin\LogoutAction;
+use App\Application\Actions\Admin\Property\CreatePropertyAction;
+use App\Application\Actions\Admin\Property\CreatePropertyFormAction;
+use App\Application\Actions\Admin\Property\DeletePropertyAction;
+use App\Application\Actions\Admin\Property\EditPropertyFormAction;
+use App\Application\Actions\Admin\Property\ListPropertiesAction;
+use App\Application\Actions\Admin\Property\UpdatePropertyAction;
+use App\Application\Actions\Admin\Property\ViewPropertyDetailAction;
+use App\Application\Middleware\AuthMiddleware;
+use App\Application\Middleware\CsrfMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
@@ -11,17 +21,28 @@ use Slim\Interfaces\RouteCollectorProxyInterface as Group;
 
 return function (App $app) {
     $app->options('/{routes:.*}', function (Request $request, Response $response) {
-        // CORS Pre-Flight OPTIONS Request Handler
         return $response;
     });
 
     $app->get('/', function (Request $request, Response $response) {
-        $response->getBody()->write('Hello world!');
-        return $response;
+        return $response->withHeader('Location', '/admin/properties')->withStatus(302);
     });
 
-    $app->group('/users', function (Group $group) {
-        $group->get('', ListUsersAction::class);
-        $group->get('/{id}', ViewUserAction::class);
-    });
+    $app->group('/admin', function (Group $group) {
+        $group->get('', function (Request $request, Response $response) {
+            return $response->withHeader('Location', '/admin/properties')->withStatus(302);
+        });
+
+        $group->get('/login', LoginFormAction::class);
+        $group->post('/login', LoginAction::class);
+        $group->post('/logout', LogoutAction::class);
+
+        $group->get('/properties', ListPropertiesAction::class);
+        $group->get('/properties/create', CreatePropertyFormAction::class);
+        $group->post('/properties', CreatePropertyAction::class);
+        $group->get('/properties/{id}', ViewPropertyDetailAction::class);
+        $group->get('/properties/{id}/edit', EditPropertyFormAction::class);
+        $group->post('/properties/{id}', UpdatePropertyAction::class);
+        $group->post('/properties/{id}/delete', DeletePropertyAction::class);
+    })->add(CsrfMiddleware::class)->add(AuthMiddleware::class);
 };

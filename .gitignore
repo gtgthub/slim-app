@@ -1,7 +1,10 @@
 .idea/
 .vscode/
-/coverage/
 /vendor/
 /logs/*
 !/logs/README.md
-.phpunit.result.cache
+.env
+/public/uploads/*
+!/public/uploads/.gitkeep
+/node_modules/
+/public/assets/css/app.css
