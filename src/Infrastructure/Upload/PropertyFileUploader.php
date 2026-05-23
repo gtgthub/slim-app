@@ -16,9 +16,9 @@ class PropertyFileUploader
 
     private string $uploadRoot;
 
-    public function __construct(string $projectRoot)
+    public function __construct(string $uploadRoot)
     {
-        $this->uploadRoot = $projectRoot . '/public/uploads/properties';
+        $this->uploadRoot = rtrim($uploadRoot, '/');
     }
 
     /**

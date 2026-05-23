@@ -77,7 +77,7 @@ return function (ContainerBuilder $containerBuilder) {
             $settings = $c->get(SettingsInterface::class);
             $upload = $settings->get('upload');
 
-            return new PropertyFileUploader($upload['root']);
+            return new PropertyFileUploader($upload['properties_root']);
         },
         CurlPropertyApiClient::class => function (ContainerInterface $c) {
             $settings = $c->get(SettingsInterface::class);

@@ -62,6 +62,10 @@ return function (ContainerBuilder $containerBuilder) {
                 ],
                 'upload' => [
                     'root' => __DIR__ . '/..',
+                    'properties_root' => __DIR__ . '/../' . ltrim(
+                        $env('PROPERTY_UPLOAD_ROOT', 'public/uploads/properties') ?? 'public/uploads/properties',
+                        '/'
+                    ),
                 ],
                 'property_api' => [
                     'base_url' => rtrim($env('PROPERTY_API_BASE_URL', 'https://trial.craig.mtcserver15.com') ?? 'https://trial.craig.mtcserver15.com', '/'),
