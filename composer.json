@@ -30,7 +30,7 @@
         "slim/php-view": "^3.2",
         "slim/psr7": "^1.5",
         "slim/slim": "^4.10",
-        "vlucas/phpdotenv": "^5.5"
+        "vlucas/phpdotenv": "^5.8"
     },
     "require-dev": {
         "phpstan/extension-installer": "^1.2.0",
